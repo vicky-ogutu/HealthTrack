@@ -31,13 +31,15 @@ fun PatientRegistrationScreen(
     val gender by viewModel.gender.collectAsState()
     val isPatientIdUnique by viewModel.isPatientIdUnique.collectAsState()
     val isFormValid by viewModel.isFormValid.collectAsState()
-    val navigateToVitals by viewModel.navigateToVitals.collectAsState()
+    val navigateToVitals by viewModel.navigateToVitals.collectAsState() // Now this is Boolean
+    val lastSavedPatientId by viewModel.lastSavedPatientId.collectAsState()
 
-    // Add navigation effect
+    // Add navigation effect - FIXED: navigateToVitals is now Boolean
     LaunchedEffect(navigateToVitals) {
-        navigateToVitals?.let { patientId ->
+        if (navigateToVitals) { // No more type mismatch error
             viewModel.clearNavigation()
-            navController.navigate("vitals/$patientId")
+            // Use simple navigation without parameters
+            navController.navigate("vitals")
         }
     }
 

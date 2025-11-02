@@ -2,10 +2,9 @@ package com.example.healthtrack.ViewModels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.healthtrack.TokenManager
-import com.example.healthtrack.ApiDataClasses.LoginRequest
-import com.example.healthtrack.ApiDataClasses.SignUpRequest
+import com.example.healthtrack.ApiDataClasses.AuthResponse
 import com.example.healthtrack.Repositories.AuthRepository
+import com.example.healthtrack.TokenManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -16,46 +15,23 @@ class AuthViewModel(
     private val tokenManager: TokenManager
 ) : ViewModel() {
 
-    // SignUp State
-    private val _signUpState = MutableStateFlow<AuthState>(AuthState.Idle)
-    val signUpState: StateFlow<AuthState> = _signUpState.asStateFlow()
-
     // Login State
     private val _loginState = MutableStateFlow<AuthState>(AuthState.Idle)
     val loginState: StateFlow<AuthState> = _loginState.asStateFlow()
 
-    fun signUp(email: String, firstname: String, lastname: String, password: String) {
-        viewModelScope.launch {
-            _signUpState.value = AuthState.Loading
-            try {
-                val response = authRepository.signUp(
-                    SignUpRequest(
-                        email = email,
-                        firstname = firstname,
-                        lastname = lastname,
-                        password = password
-                    )
-                )
-
-                if (response.isSuccessful && response.body()?.success == true) {
-                    _signUpState.value = AuthState.Success(response.body()!!)
-                } else {
-                    _signUpState.value = AuthState.Error(
-                        response.body()?.data?.message ?: "Sign up failed"
-                    )
-                }
-            } catch (e: Exception) {
-                _signUpState.value = AuthState.Error("Network error: ${e.message}")
-            }
-        }
-    }
+    // SignUp State
+    private val _signUpState = MutableStateFlow<AuthState>(AuthState.Idle)
+    val signUpState: StateFlow<AuthState> = _signUpState.asStateFlow()
 
     fun login(email: String, password: String) {
         viewModelScope.launch {
             _loginState.value = AuthState.Loading
             try {
                 val response = authRepository.login(
-                    LoginRequest(email = email, password = password)
+                    com.example.healthtrack.ApiDataClasses.LoginRequest(
+                        email = email,
+                        password = password
+                    )
                 )
 
                 if (response.isSuccessful && response.body()?.success == true) {
@@ -79,12 +55,38 @@ class AuthViewModel(
         }
     }
 
-    fun clearSignUpState() {
-        _signUpState.value = AuthState.Idle
+    fun signUp(email: String, firstname: String, lastname: String, password: String) {
+        viewModelScope.launch {
+            _signUpState.value = AuthState.Loading
+            try {
+                val response = authRepository.signUp(
+                    com.example.healthtrack.ApiDataClasses.SignUpRequest(
+                        email = email,
+                        firstname = firstname,
+                        lastname = lastname,
+                        password = password
+                    )
+                )
+
+                if (response.isSuccessful && response.body()?.success == true) {
+                    _signUpState.value = AuthState.Success(response.body()!!)
+                } else {
+                    _signUpState.value = AuthState.Error(
+                        response.body()?.data?.message ?: "Sign up failed"
+                    )
+                }
+            } catch (e: Exception) {
+                _signUpState.value = AuthState.Error("Network error: ${e.message}")
+            }
+        }
     }
 
     fun clearLoginState() {
         _loginState.value = AuthState.Idle
+    }
+
+    fun clearSignUpState() {
+        _signUpState.value = AuthState.Idle
     }
 
     fun isLoggedIn(): Boolean {
@@ -94,11 +96,25 @@ class AuthViewModel(
     fun logout() {
         tokenManager.clearAuthData()
     }
+
+    companion object {
+        fun Factory(
+            authRepository: AuthRepository,
+            tokenManager: TokenManager
+        ): androidx.lifecycle.ViewModelProvider.Factory {
+            return object : androidx.lifecycle.ViewModelProvider.Factory {
+                @Suppress("UNCHECKED_CAST")
+                override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                    return AuthViewModel(authRepository, tokenManager) as T
+                }
+            }
+        }
+    }
 }
 
 sealed class AuthState {
     object Idle : AuthState()
     object Loading : AuthState()
-    data class Success(val response: com.example.healthtrack.ApiDataClasses.AuthResponse) : AuthState()
+    data class Success(val response: AuthResponse) : AuthState()
     data class Error(val message: String) : AuthState()
 }

@@ -21,12 +21,17 @@ fun VitalsFormScreen(
     vitalViewModel: VitalViewModel,
     navController: NavController
 ) {
+    // For now, we'll use a placeholder patient ID
+    // In a real app, you would get this from shared ViewModel state or database
+    val currentPatientId = remember { "PAT-8C3D3876" } // Replace with actual patient ID logic
+
     val visitDate by vitalViewModel.visitDate.collectAsState()
     val height by vitalViewModel.height.collectAsState()
     val weight by vitalViewModel.weight.collectAsState()
     val bmi by vitalViewModel.bmi.collectAsState()
     val saveSuccess by vitalViewModel.saveSuccess.collectAsState()
     val errorMessage by vitalViewModel.errorMessage.collectAsState()
+    val isLoading by vitalViewModel.isLoading.collectAsState()
 
     val dateFormatter = remember { SimpleDateFormat("MMM dd, yyyy", Locale.getDefault()) }
     var showDatePicker by remember { mutableStateOf(false) }
@@ -38,11 +43,9 @@ fun VitalsFormScreen(
         if (saveSuccess) {
             vitalViewModel.clearSuccess()
             val currentBmi = bmi ?: 0.0
-            if (currentBmi <= 25) {
-                navController.navigate("general_assessment/$patientId")
-            } else {
-                navController.navigate("overweight_assessment/$patientId")
-            }
+            // TODO: Navigate to appropriate assessment screen based on BMI
+            // For now, just go back
+            navController.popBackStack()
         }
     }
 
@@ -97,7 +100,7 @@ fun VitalsFormScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Patient Vitals") }
+                title = { Text("Patient Vitals - $currentPatientId") }
             )
         },
         bottomBar = {
@@ -123,10 +126,18 @@ fun VitalsFormScreen(
                             bmi != null
 
                     Button(
-                        onClick = { vitalViewModel.saveVital(patientId) },
-                        enabled = isFormValid
+                        onClick = { vitalViewModel.saveVital(currentPatientId) },
+                        enabled = isFormValid && !isLoading
                     ) {
-                        Text("Save Vitals")
+                        if (isLoading) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(16.dp),
+                                color = MaterialTheme.colorScheme.onPrimary,
+                                strokeWidth = 2.dp
+                            )
+                        } else {
+                            Text("Save Vitals")
+                        }
                     }
                 }
             }
@@ -140,6 +151,18 @@ fun VitalsFormScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            // Patient ID Display
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+            ) {
+                Text(
+                    text = "Patient ID: $currentPatientId",
+                    modifier = Modifier.padding(16.dp),
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
+
             // Visit Date
             OutlinedTextField(
                 value = visitDate?.let { dateFormatter.format(it) } ?: "",

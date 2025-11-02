@@ -3,6 +3,7 @@ package com.example.healthtrack
 
 import com.example.healthtrack.APIs.AuthApiService
 import com.example.healthtrack.APIs.PatientRegistrationApiService
+import com.example.healthtrack.APIs.VitalApiService
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
@@ -37,6 +38,7 @@ object RetrofitInstance {
     val patientApiService: PatientRegistrationApiService by lazy {
         retrofit.create(PatientRegistrationApiService::class.java)
     }
+    val vitalApiService: VitalApiService by lazy {
+        retrofit.create(VitalApiService::class.java)
+    }
 }
-       //private const val BASE_URL = "https://patientvisitapis.intellisoftkenya.com/api/" // Replace with your actual base URL
-

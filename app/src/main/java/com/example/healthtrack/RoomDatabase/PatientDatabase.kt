@@ -7,16 +7,18 @@ import androidx.room.TypeConverters
 import android.content.Context
 import com.example.healthtrack.RoomDatabase.Entities.PatientRegistrationEntity
 import com.example.healthtrack.RoomDatabase.Daos.PatientRegistrationDao
+import com.example.healthtrack.RoomDatabase.Daos.VitalDao
 import com.example.healthtrack.RoomDatabase.Entities.VitalEntity
 
 @Database(
     entities = [PatientRegistrationEntity::class, VitalEntity::class],
-    version = 2,
+    version = 3,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
 abstract class PatientDatabase : RoomDatabase() {
     abstract fun patientDao(): PatientRegistrationDao
+    abstract fun vitalDao(): VitalDao
 
     companion object {
         @Volatile
@@ -28,7 +30,7 @@ abstract class PatientDatabase : RoomDatabase() {
                     context.applicationContext,
                     PatientDatabase::class.java,
                     "patient_database"
-                ).build()
+                ).fallbackToDestructiveMigration().build()
                 INSTANCE = instance
                 instance
             }

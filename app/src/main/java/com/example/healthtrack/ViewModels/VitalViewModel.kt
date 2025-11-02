@@ -31,6 +31,9 @@ class VitalViewModel(private val vitalRepository: VitalRepository) : ViewModel()
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
 
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+
     // Calculate BMI when height or weight changes
     fun updateHeight(height: String) {
         _height.value = height
@@ -61,6 +64,9 @@ class VitalViewModel(private val vitalRepository: VitalRepository) : ViewModel()
 
     fun saveVital(patientId: String) {
         viewModelScope.launch {
+            _isLoading.value = true
+            _errorMessage.value = null
+
             try {
                 val visitDateValue = _visitDate.value
                 val heightValue = _height.value.toDoubleOrNull()
@@ -89,9 +95,11 @@ class VitalViewModel(private val vitalRepository: VitalRepository) : ViewModel()
 
                 vitalRepository.insertVital(vital)
                 _saveSuccess.value = true
-                clearForm()
+
             } catch (e: Exception) {
                 _errorMessage.value = "Error saving vitals: ${e.message}"
+            } finally {
+                _isLoading.value = false
             }
         }
     }

@@ -10,18 +10,22 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.example.healthtrack.Repositories.AuthRepository
 import com.example.healthtrack.Repositories.PatientRegistrationRepository
+import com.example.healthtrack.Repositories.VitalRepository
 import com.example.healthtrack.RoomDatabase.PatientDatabase
 import com.example.healthtrack.Screens.LoginScreen
 import com.example.healthtrack.Screens.PatientRegistrationScreen
-//import com.example.healthtrack.Screens.PatientRegistrationScreen
 import com.example.healthtrack.Screens.SignUpScreen
+import com.example.healthtrack.Screens.VitalsFormScreen
 import com.example.healthtrack.ViewModels.AuthViewModel
 import com.example.healthtrack.ViewModels.PatientRegistrationViewModel
+import com.example.healthtrack.ViewModels.VitalViewModel
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -48,21 +52,33 @@ fun HealthTrackApp() {
     // Initialize dependencies
     val tokenManager = TokenManager(context)
 
-    // Create AuthRepository and AuthViewModel
+    // Create repositories
     val authRepository = AuthRepository(RetrofitInstance.authApiService)
-    val authViewModel: AuthViewModel = viewModel(
-        factory = AuthViewModelFactory(authRepository, tokenManager)
-    )
-
-    // Create PatientRepository and PatientViewModel
     val patientDatabase = PatientDatabase.getInstance(context)
+
     val patientRepository = PatientRegistrationRepository(
         patientDao = patientDatabase.patientDao(),
         patientApiService = RetrofitInstance.patientApiService,
         tokenManager = tokenManager
     )
+
+    val vitalRepository = VitalRepository(
+        vitalDao = patientDatabase.vitalDao(),
+        vitalApiService = RetrofitInstance.vitalApiService,
+        tokenManager = tokenManager
+    )
+
+    // Create ViewModels
+    val authViewModel: AuthViewModel = viewModel(
+        factory = AuthViewModel.Factory(authRepository, tokenManager)
+    )
+
     val patientViewModel: PatientRegistrationViewModel = viewModel(
-        factory = PatientRegistrationViewModelFactory(patientRepository)
+        factory = PatientRegistrationViewModel.Factory(patientRepository)
+    )
+
+    val vitalViewModel: VitalViewModel = viewModel(
+        factory = VitalViewModel.Factory(vitalRepository)
     )
 
     NavHost(
@@ -89,13 +105,22 @@ fun HealthTrackApp() {
         composable("patient_registration") {
             PatientRegistrationScreen(
                 viewModel = patientViewModel,
-                navController = navController, // Add this
+                navController = navController,
                 onClose = {
                     authViewModel.logout()
                     navController.navigate("login") {
                         popUpTo("patient_registration") { inclusive = true }
                     }
                 }
+            )
+        }
+
+        // FIXED: Use simpler route pattern without arguments first
+        composable("vitals") {
+            VitalsFormScreen(
+                patientId = "", // We'll pass this through ViewModel state
+                vitalViewModel = vitalViewModel,
+                navController = navController
             )
         }
     }

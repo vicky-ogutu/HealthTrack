@@ -14,9 +14,6 @@ class PatientRegistrationViewModel(private val repository: PatientRegistrationRe
     private val _patientId = MutableStateFlow("")
     val patientId: StateFlow<String> = _patientId.asStateFlow()
 
-    private val _navigateToVitals = MutableStateFlow<String?>(null)
-    val navigateToVitals: StateFlow<String?> = _navigateToVitals.asStateFlow()
-
     private val _registrationDate = MutableStateFlow<Date?>(null)
     val registrationDate: StateFlow<Date?> = _registrationDate.asStateFlow()
 
@@ -34,6 +31,13 @@ class PatientRegistrationViewModel(private val repository: PatientRegistrationRe
 
     private val _isPatientIdUnique = MutableStateFlow(true)
     val isPatientIdUnique: StateFlow<Boolean> = _isPatientIdUnique.asStateFlow()
+
+    // Navigation state - FIXED: Use Boolean instead of String
+    private val _navigateToVitals = MutableStateFlow(false)
+    val navigateToVitals: StateFlow<Boolean> = _navigateToVitals.asStateFlow()
+
+    private val _lastSavedPatientId = MutableStateFlow<String?>(null)
+    val lastSavedPatientId: StateFlow<String?> = _lastSavedPatientId.asStateFlow()
 
     // Form validation
     val isFormValid: StateFlow<Boolean> = combine(
@@ -119,10 +123,9 @@ class PatientRegistrationViewModel(private val repository: PatientRegistrationRe
                     )
 
                     repository.insertPatient(patient)
-                    //trigger navigation to vital form
-                    _navigateToVitals.value = patientId.value
-                    // Clear form after successful save  and navigate
-                    //clearForm()
+                    // Store the patient ID and trigger navigation
+                    _lastSavedPatientId.value = patientId.value
+                    _navigateToVitals.value = true
                 }
             } catch (e: Exception) {
                 // Handle error
@@ -131,7 +134,12 @@ class PatientRegistrationViewModel(private val repository: PatientRegistrationRe
         }
     }
 
-    private fun clearForm() {
+    fun clearNavigation() {
+        _navigateToVitals.value = false
+        _lastSavedPatientId.value = null
+    }
+
+    fun clearForm() {
         _patientId.value = ""
         _registrationDate.value = null
         _firstName.value = ""
@@ -141,8 +149,14 @@ class PatientRegistrationViewModel(private val repository: PatientRegistrationRe
         _isPatientIdUnique.value = true
     }
 
-    //clear navigation
-    fun clearNavigation() {
-        _navigateToVitals.value = null
+    companion object {
+        fun Factory(repository: PatientRegistrationRepository): androidx.lifecycle.ViewModelProvider.Factory {
+            return object : androidx.lifecycle.ViewModelProvider.Factory {
+                @Suppress("UNCHECKED_CAST")
+                override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                    return PatientRegistrationViewModel(repository) as T
+                }
+            }
+        }
     }
 }
