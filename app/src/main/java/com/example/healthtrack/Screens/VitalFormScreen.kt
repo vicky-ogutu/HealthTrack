@@ -21,9 +21,8 @@ fun VitalsFormScreen(
     vitalViewModel: VitalViewModel,
     navController: NavController
 ) {
-    // For now, we'll use a placeholder patient ID
-    // In a real app, you would get this from shared ViewModel state or database
-    val currentPatientId = remember { "PAT-8C3D3876" } // Replace with actual patient ID logic
+
+    val currentPatientId = remember { "PAT-8C3D3876" }
 
     val visitDate by vitalViewModel.visitDate.collectAsState()
     val height by vitalViewModel.height.collectAsState()
@@ -43,7 +42,7 @@ fun VitalsFormScreen(
         if (saveSuccess) {
             vitalViewModel.clearSuccess()
             val currentBmi = bmi ?: 0.0
-            // TODO: Navigate to appropriate assessment screen based on BMI
+            // Navigate to appropriate assessment screen based on BMI
             // For now, just go back
             navController.popBackStack()
         }

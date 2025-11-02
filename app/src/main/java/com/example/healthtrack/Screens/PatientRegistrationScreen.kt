@@ -34,11 +34,9 @@ fun PatientRegistrationScreen(
     val navigateToVitals by viewModel.navigateToVitals.collectAsState() // Now this is Boolean
     val lastSavedPatientId by viewModel.lastSavedPatientId.collectAsState()
 
-    // Add navigation effect - FIXED: navigateToVitals is now Boolean
     LaunchedEffect(navigateToVitals) {
-        if (navigateToVitals) { // No more type mismatch error
+        if (navigateToVitals) {
             viewModel.clearNavigation()
-            // Use simple navigation without parameters
             navController.navigate("vitals")
         }
     }

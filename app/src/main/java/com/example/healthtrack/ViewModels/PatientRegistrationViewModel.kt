@@ -126,6 +126,7 @@ class PatientRegistrationViewModel(private val repository: PatientRegistrationRe
                     // Store the patient ID and trigger navigation
                     _lastSavedPatientId.value = patientId.value
                     _navigateToVitals.value = true
+                    clearForm()
                 }
             } catch (e: Exception) {
                 // Handle error
