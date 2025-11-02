@@ -7,10 +7,11 @@ import androidx.room.TypeConverters
 import android.content.Context
 import com.example.healthtrack.RoomDatabase.Entities.PatientRegistrationEntity
 import com.example.healthtrack.RoomDatabase.Daos.PatientRegistrationDao
+import com.example.healthtrack.RoomDatabase.Entities.VitalEntity
 
 @Database(
-    entities = [PatientRegistrationEntity::class],
-    version = 1,
+    entities = [PatientRegistrationEntity::class, VitalEntity::class],
+    version = 2,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
