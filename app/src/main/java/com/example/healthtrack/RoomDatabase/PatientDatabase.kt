@@ -3,11 +3,17 @@ package com.example.healthtrack.RoomDatabase
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.room.TypeConverters
 import android.content.Context
 import com.example.healthtrack.RoomDatabase.Entities.PatientRegistrationEntity
 import com.example.healthtrack.RoomDatabase.Daos.PatientRegistrationDao
 
-@Database(entities = [PatientRegistrationEntity::class], version = 1)
+@Database(
+    entities = [PatientRegistrationEntity::class],
+    version = 1,
+    exportSchema = false
+)
+@TypeConverters(Converters::class)
 abstract class PatientDatabase : RoomDatabase() {
     abstract fun patientDao(): PatientRegistrationDao
 

@@ -11,6 +11,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.example.healthtrack.ViewModels.PatientRegistrationViewModel
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -260,7 +261,6 @@ fun PatientRegistrationScreen(
                 }
             }
 
-            // Form validation summary
             if (!isFormValid && (patientId.isNotBlank() || firstName.isNotBlank() || lastName.isNotBlank())) {
                 Card(
                     modifier = Modifier.fillMaxWidth(),

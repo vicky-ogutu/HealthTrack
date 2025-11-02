@@ -1,19 +1,4 @@
-package com.example.healthtrack.Screens
-
-import android.os.Bundle
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
-import com.example.healthtrack.ui.theme.HealthTrackTheme
-
-
+package com.example.healthtrack
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -24,18 +9,18 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.example.healthtrack.PatientRegistrationScreen
-import com.example.healthtrack.auth.TokenManager
-import com.example.healthtrack.repository.AuthRepository
-import com.example.healthtrack.repository.PatientRepository
-import com.example.healthtrack.ui.screens.LoginScreen
-import com.example.healthtrack.ui.screens.PatientRegistrationScreen
-import com.example.healthtrack.ui.screens.SignUpScreen
-import com.example.healthtrack.viewmodel.AuthViewModel
-import com.example.healthtrack.viewmodel.PatientViewModel
+import com.example.healthtrack.Repositories.AuthRepository
+import com.example.healthtrack.Repositories.PatientRegistrationRepository
+import com.example.healthtrack.RoomDatabase.PatientDatabase
+import com.example.healthtrack.Screens.LoginScreen
+//import com.example.healthtrack.Screens.PatientRegistrationScreen
+import com.example.healthtrack.Screens.SignUpScreen
+import com.example.healthtrack.ViewModels.AuthViewModel
+import com.example.healthtrack.ViewModels.PatientRegistrationViewModel
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -61,16 +46,23 @@ fun HealthTrackApp() {
 
     // Initialize dependencies
     val tokenManager = TokenManager(context)
-    val authRepository = AuthRepository(RetrofitInstance.authApiService)
-    val authViewModel = AuthViewModel(authRepository, tokenManager)
 
+    // Create AuthRepository and AuthViewModel
+    val authRepository = AuthRepository(RetrofitInstance.authApiService)
+    val authViewModel: AuthViewModel = viewModel(
+        factory = AuthViewModelFactory(authRepository, tokenManager)
+    )
+
+    // Create PatientRepository and PatientViewModel
     val patientDatabase = PatientDatabase.getInstance(context)
-    val patientRepository = PatientRepository(
+    val patientRepository = PatientRegistrationRepository(
         patientDao = patientDatabase.patientDao(),
         patientApiService = RetrofitInstance.patientApiService,
         tokenManager = tokenManager
     )
-    val patientViewModel = PatientRegViewModel(patientRepository)
+    val patientViewModel: PatientRegistrationViewModel = viewModel(
+        factory = PatientRegistrationViewModelFactory(patientRepository)
+    )
 
     NavHost(
         navController = navController,

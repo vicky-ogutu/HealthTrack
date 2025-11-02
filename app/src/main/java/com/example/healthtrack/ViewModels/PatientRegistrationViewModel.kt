@@ -1,4 +1,4 @@
-package com.example.healthtrack
+package com.example.healthtrack.ViewModels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -32,7 +32,7 @@ class PatientRegistrationViewModel(private val repository: PatientRegistrationRe
     private val _isPatientIdUnique = MutableStateFlow(true)
     val isPatientIdUnique: StateFlow<Boolean> = _isPatientIdUnique.asStateFlow()
 
-    // Form validation - Fixed combine function
+    // Form validation
     val isFormValid: StateFlow<Boolean> = combine(
         _patientId,
         _registrationDate,
@@ -57,7 +57,6 @@ class PatientRegistrationViewModel(private val repository: PatientRegistrationRe
         SharingStarted.WhileSubscribed(5000),
         false
     )
-
 
     fun updatePatientId(patientId: String) {
         _patientId.value = patientId
