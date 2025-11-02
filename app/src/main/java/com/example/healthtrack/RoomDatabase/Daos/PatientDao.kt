@@ -1,9 +1,9 @@
-package com.example.healthtrack
+package com.example.healthtrack.RoomDatabase.Daos
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
-import com.example.healthtrack.Entities.PatientEntity
+import com.example.healthtrack.RoomDatabase.Entities.PatientEntity
 import kotlinx.coroutines.flow.Flow
 
 @Dao

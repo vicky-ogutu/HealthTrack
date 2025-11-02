@@ -2,7 +2,8 @@ package com.example.healthtrack
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.healthtrack.Entities.PatientEntity
+import com.example.healthtrack.RoomDatabase.Entities.PatientEntity
+import com.example.healthtrack.Repositories.PatientRepository
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.util.*

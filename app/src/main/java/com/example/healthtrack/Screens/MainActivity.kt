@@ -1,4 +1,4 @@
-package com.example.healthtrack
+package com.example.healthtrack.Screens
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity

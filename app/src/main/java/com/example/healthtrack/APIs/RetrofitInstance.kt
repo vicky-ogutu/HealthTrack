@@ -1,4 +1,4 @@
-package com.example.healthtrack
+package com.example.healthtrack.APIs
 
 // RetrofitInstance.kt
 import retrofit2.Retrofit

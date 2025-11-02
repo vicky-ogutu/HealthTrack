@@ -1,8 +1,10 @@
-package com.example.healthtrack
+package com.example.healthtrack.Repositories
 
 // PatientRepository.kt
+import com.example.healthtrack.APIs.PatientApiService
 import com.example.healthtrack.ApiDataClasses.Patient
-import com.example.healthtrack.Entities.PatientEntity
+import com.example.healthtrack.RoomDatabase.Entities.PatientEntity
+import com.example.healthtrack.RoomDatabase.Daos.PatientDao
 import kotlinx.coroutines.flow.Flow
 
 class PatientRepository(
@@ -18,10 +20,10 @@ class PatientRepository(
         // Convert to API model and send to server
         val apiPatient = Patient(
             patientId = patient.patientId,
-            registrationDate = patient.registrationDate.toString(),
+            registrationDate = patient.registrationDate,
             firstName = patient.firstName,
             lastName = patient.lastName,
-            dateOfBirth = patient.dateOfBirth.toString(),
+            dateOfBirth = patient.dateOfBirth,
             gender = patient.gender
         )
 
