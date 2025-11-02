@@ -8,7 +8,7 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.util.*
 
-class PatientViewModel(private val repository: PatientRegistrationRepository) : ViewModel() {
+class PatientRegistrationViewModel(private val repository: PatientRegistrationRepository) : ViewModel() {
 
     // Form state
     private val _patientId = MutableStateFlow("")
@@ -108,11 +108,11 @@ class PatientViewModel(private val repository: PatientRegistrationRepository) : 
 
                 if (registrationDateValue != null && dateOfBirthValue != null) {
                     val patient = PatientRegistrationEntity(
-                        patientId = patientId.value,
-                        registrationDate = registrationDateValue,
-                        firstName = firstName.value,
-                        lastName = lastName.value,
-                        dateOfBirth = dateOfBirthValue,
+                        unique = patientId.value,
+                        reg_date = registrationDateValue,
+                        firstname = firstName.value,
+                        lastname = lastName.value,
+                        dob = dateOfBirthValue,
                         gender = gender.value
                     )
 

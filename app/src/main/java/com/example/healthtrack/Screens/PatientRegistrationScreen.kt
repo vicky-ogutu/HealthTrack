@@ -11,14 +11,13 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.flow.combine
 import java.text.SimpleDateFormat
 import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PatientRegistrationScreen(
-    viewModel: PatientViewModel,
+    viewModel: PatientRegistrationViewModel,
     onClose: () -> Unit
 ) {
     val patientId by viewModel.patientId.collectAsState()
