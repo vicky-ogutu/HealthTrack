@@ -14,6 +14,9 @@ class PatientRegistrationViewModel(private val repository: PatientRegistrationRe
     private val _patientId = MutableStateFlow("")
     val patientId: StateFlow<String> = _patientId.asStateFlow()
 
+    private val _navigateToVitals = MutableStateFlow<String?>(null)
+    val navigateToVitals: StateFlow<String?> = _navigateToVitals.asStateFlow()
+
     private val _registrationDate = MutableStateFlow<Date?>(null)
     val registrationDate: StateFlow<Date?> = _registrationDate.asStateFlow()
 
@@ -116,8 +119,10 @@ class PatientRegistrationViewModel(private val repository: PatientRegistrationRe
                     )
 
                     repository.insertPatient(patient)
-                    // Clear form after successful save
-                    clearForm()
+                    //trigger navigation to vital form
+                    _navigateToVitals.value = patientId.value
+                    // Clear form after successful save  and navigate
+                    //clearForm()
                 }
             } catch (e: Exception) {
                 // Handle error
@@ -134,5 +139,10 @@ class PatientRegistrationViewModel(private val repository: PatientRegistrationRe
         _dateOfBirth.value = null
         _gender.value = ""
         _isPatientIdUnique.value = true
+    }
+
+    //clear navigation
+    fun clearNavigation() {
+        _navigateToVitals.value = null
     }
 }

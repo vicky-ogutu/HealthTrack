@@ -1,4 +1,4 @@
-package com.example.healthtrack
+package com.example.healthtrack.Screens
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -11,6 +11,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
 import com.example.healthtrack.ViewModels.PatientRegistrationViewModel
 import java.text.SimpleDateFormat
 import java.util.*
@@ -19,6 +20,7 @@ import java.util.*
 @Composable
 fun PatientRegistrationScreen(
     viewModel: PatientRegistrationViewModel,
+    navController: NavController,
     onClose: () -> Unit
 ) {
     val patientId by viewModel.patientId.collectAsState()
@@ -29,6 +31,15 @@ fun PatientRegistrationScreen(
     val gender by viewModel.gender.collectAsState()
     val isPatientIdUnique by viewModel.isPatientIdUnique.collectAsState()
     val isFormValid by viewModel.isFormValid.collectAsState()
+    val navigateToVitals by viewModel.navigateToVitals.collectAsState()
+
+    // Add navigation effect
+    LaunchedEffect(navigateToVitals) {
+        navigateToVitals?.let { patientId ->
+            viewModel.clearNavigation()
+            navController.navigate("vitals/$patientId")
+        }
+    }
 
     val dateFormatter = remember { SimpleDateFormat("MMM dd, yyyy", Locale.getDefault()) }
     val scrollState = rememberScrollState()
@@ -261,6 +272,7 @@ fun PatientRegistrationScreen(
                 }
             }
 
+            // Form validation summary
             if (!isFormValid && (patientId.isNotBlank() || firstName.isNotBlank() || lastName.isNotBlank())) {
                 Card(
                     modifier = Modifier.fillMaxWidth(),

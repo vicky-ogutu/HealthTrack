@@ -17,6 +17,7 @@ import com.example.healthtrack.Repositories.AuthRepository
 import com.example.healthtrack.Repositories.PatientRegistrationRepository
 import com.example.healthtrack.RoomDatabase.PatientDatabase
 import com.example.healthtrack.Screens.LoginScreen
+import com.example.healthtrack.Screens.PatientRegistrationScreen
 //import com.example.healthtrack.Screens.PatientRegistrationScreen
 import com.example.healthtrack.Screens.SignUpScreen
 import com.example.healthtrack.ViewModels.AuthViewModel
@@ -88,6 +89,7 @@ fun HealthTrackApp() {
         composable("patient_registration") {
             PatientRegistrationScreen(
                 viewModel = patientViewModel,
+                navController = navController, // Add this
                 onClose = {
                     authViewModel.logout()
                     navController.navigate("login") {
