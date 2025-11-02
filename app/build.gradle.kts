@@ -61,6 +61,14 @@ dependencies {
     val retrofit_version = "2.9.0"
     val gson_version = "2.10.1"
 
+    // Navigation
+    implementation("androidx.navigation:navigation-compose:2.7.7")
+
+    // Dependency Injection
+    implementation("com.google.dagger:hilt-android:2.48.1")
+   // ksp("com.google.dagger:hilt-compiler:2.48.1")
+    implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
+
     implementation ("com.squareup.retrofit2:retrofit:$retrofit_version")
     implementation ("com.squareup.retrofit2:converter-gson:$retrofit_version")
     implementation ("com.squareup.okhttp3:logging-interceptor:4.11.0")

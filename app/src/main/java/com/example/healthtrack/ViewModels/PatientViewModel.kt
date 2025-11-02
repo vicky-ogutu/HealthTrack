@@ -2,13 +2,13 @@ package com.example.healthtrack
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.healthtrack.RoomDatabase.Entities.PatientEntity
-import com.example.healthtrack.Repositories.PatientRepository
+import com.example.healthtrack.RoomDatabase.Entities.PatientRegistrationEntity
+import com.example.healthtrack.Repositories.PatientRegistrationRepository
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.util.*
 
-class PatientViewModel(private val repository: PatientRepository) : ViewModel() {
+class PatientViewModel(private val repository: PatientRegistrationRepository) : ViewModel() {
 
     // Form state
     private val _patientId = MutableStateFlow("")
@@ -107,7 +107,7 @@ class PatientViewModel(private val repository: PatientRepository) : ViewModel() 
                 val dateOfBirthValue = dateOfBirth.value
 
                 if (registrationDateValue != null && dateOfBirthValue != null) {
-                    val patient = PatientEntity(
+                    val patient = PatientRegistrationEntity(
                         patientId = patientId.value,
                         registrationDate = registrationDateValue,
                         firstName = firstName.value,

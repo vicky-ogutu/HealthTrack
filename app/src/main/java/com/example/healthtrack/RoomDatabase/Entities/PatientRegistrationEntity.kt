@@ -5,12 +5,12 @@ import androidx.room.PrimaryKey
 import java.util.Date
 
 @Entity(tableName = "patients")
-data class PatientEntity(
+data class PatientRegistrationEntity(
     @PrimaryKey
-    val patientId: String,
-    val registrationDate: Date,
-    val firstName: String,
-    val lastName: String,
-    val dateOfBirth: Date,
+    val unique: String,
+    val reg_date: Date,
+    val firstname: String,
+    val lastname: String,
+    val dob: Date,
     val gender: String
 )
