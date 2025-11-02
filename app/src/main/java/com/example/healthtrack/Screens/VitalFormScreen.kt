@@ -38,16 +38,30 @@ fun VitalsFormScreen(
     val visitDateState = rememberDatePickerState(initialSelectedDateMillis = visitDate?.time)
 
     // Handle success - navigate based on BMI
+//    LaunchedEffect(saveSuccess) {
+//        if (saveSuccess) {
+//            vitalViewModel.clearSuccess()
+//            val currentBmi = bmi ?: 0.0
+//            // Navigate to appropriate assessment screen based on BMI
+//            // For now, just go back
+//            navController.popBackStack()
+//        }
+//    }
+
+    // In the LaunchedEffect for saveSuccess, replace with:
     LaunchedEffect(saveSuccess) {
         if (saveSuccess) {
             vitalViewModel.clearSuccess()
             val currentBmi = bmi ?: 0.0
-            // Navigate to appropriate assessment screen based on BMI
-            // For now, just go back
-            navController.popBackStack()
+            val vitalId = "1" // This should come from the actual saved vital record
+
+            if (currentBmi <= 25) {
+                navController.navigate("general_assessment/$patientId/$vitalId")
+            } else {
+                navController.navigate("overweight_assessment/$patientId/$vitalId")
+            }
         }
     }
-
     // Show error dialog
     if (errorMessage != null) {
         AlertDialog(

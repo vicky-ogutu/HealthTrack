@@ -17,6 +17,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.healthtrack.Repositories.AuthRepository
 import com.example.healthtrack.Repositories.PatientRegistrationRepository
+import com.example.healthtrack.Repositories.VisitRepository
 import com.example.healthtrack.Repositories.VitalRepository
 import com.example.healthtrack.RoomDatabase.PatientDatabase
 import com.example.healthtrack.Screens.LoginScreen
@@ -26,6 +27,11 @@ import com.example.healthtrack.Screens.VitalsFormScreen
 import com.example.healthtrack.ViewModels.AuthViewModel
 import com.example.healthtrack.ViewModels.PatientRegistrationViewModel
 import com.example.healthtrack.ViewModels.VitalViewModel
+
+import com.example.healthtrack.Screens.GeneralAssessmentScreen
+import com.example.healthtrack.Screens.OverweightAssessmentScreen
+import com.example.healthtrack.ViewModels.GeneralAssessmentViewModel
+import com.example.healthtrack.ViewModels.OverweightAssessmentViewModel
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -81,6 +87,19 @@ fun HealthTrackApp() {
         factory = VitalViewModel.Factory(vitalRepository)
     )
 
+    val visitRepository = VisitRepository(
+        visitApiService = RetrofitInstance.visitApiService,
+        tokenManager = tokenManager
+    )
+
+    val generalAssessmentViewModel: GeneralAssessmentViewModel = viewModel(
+        factory = GeneralAssessmentViewModel.Factory(visitRepository)
+    )
+
+    val overweightAssessmentViewModel: OverweightAssessmentViewModel = viewModel(
+        factory = OverweightAssessmentViewModel.Factory(visitRepository)
+    )
+
     NavHost(
         navController = navController,
         startDestination = if (tokenManager.isLoggedIn()) "patient_registration" else "login"
@@ -101,6 +120,46 @@ fun HealthTrackApp() {
                 onNavigateToLogin = { navController.navigate("login") }
             )
         }
+
+        composable(
+            "general_assessment/{patientId}/{vitalId}",
+            arguments = listOf(
+                navArgument("patientId") { type = NavType.StringType },
+                navArgument("vitalId") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val patientId = backStackEntry.arguments?.getString("patientId") ?: ""
+            val vitalId = backStackEntry.arguments?.getString("vitalId") ?: ""
+            GeneralAssessmentScreen(
+                patientId = patientId,
+                vitalId = vitalId,
+                viewModel = generalAssessmentViewModel,
+                navController = navController
+            )
+        }
+
+        composable(
+            "overweight_assessment/{patientId}/{vitalId}",
+            arguments = listOf(
+                navArgument("patientId") { type = NavType.StringType },
+                navArgument("vitalId") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val patientId = backStackEntry.arguments?.getString("patientId") ?: ""
+            val vitalId = backStackEntry.arguments?.getString("vitalId") ?: ""
+            OverweightAssessmentScreen(
+                patientId = patientId,
+                vitalId = vitalId,
+                viewModel = overweightAssessmentViewModel,
+                navController = navController
+            )
+        }
+
+//        composable("patient_listing") {
+//            PatientListingScreen(
+//                navController = navController
+//            )
+//        }
 
         composable("patient_registration") {
             PatientRegistrationScreen(

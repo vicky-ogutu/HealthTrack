@@ -3,6 +3,7 @@ package com.example.healthtrack
 
 import com.example.healthtrack.APIs.AuthApiService
 import com.example.healthtrack.APIs.PatientRegistrationApiService
+import com.example.healthtrack.APIs.VisitApiService
 import com.example.healthtrack.APIs.VitalApiService
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
@@ -40,5 +41,9 @@ object RetrofitInstance {
     }
     val vitalApiService: VitalApiService by lazy {
         retrofit.create(VitalApiService::class.java)
+    }
+
+    val visitApiService: VisitApiService by lazy {
+        retrofit.create(VisitApiService::class.java)
     }
 }
