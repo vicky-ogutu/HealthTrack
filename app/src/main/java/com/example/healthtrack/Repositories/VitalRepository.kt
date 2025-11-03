@@ -1,12 +1,12 @@
 package com.example.healthtrack.Repositories
 
-import com.example.healthtrack.APIs.VitalApiService
 import com.example.healthtrack.RoomDatabase.Daos.VitalDao
 import com.example.healthtrack.RoomDatabase.Entities.VitalEntity
-
+import com.example.healthtrack.APIs.VitalApiService
 import com.example.healthtrack.TokenManager
 import com.example.healthtrack.ApiDataClasses.VitalRequest
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.firstOrNull
 import retrofit2.HttpException
 import java.text.SimpleDateFormat
 import java.util.*
@@ -17,12 +17,22 @@ class VitalRepository @Inject constructor(
     private val vitalApiService: VitalApiService,
     private val tokenManager: TokenManager
 ) {
-    suspend fun insertVital(vital: VitalEntity) {
+    // Update to return the saved vital
+    suspend fun insertVital(vital: VitalEntity): VitalEntity {
         // Save to local database first
         vitalDao.insertVital(vital)
 
-        // Convert to API request format and send to server
-        sendToServer(vital)
+        // Send to server and get the server ID
+        val serverId = sendToServer(vital)
+
+        // Update the local record with server ID if available
+        if (serverId != null) {
+            val updatedVital = vital.copy(serverId = serverId)
+            vitalDao.insertVital(updatedVital)
+            return updatedVital
+        }
+
+        return vital
     }
 
     fun getVitalsByPatient(patientId: String): Flow<List<VitalEntity>> {
@@ -33,12 +43,21 @@ class VitalRepository @Inject constructor(
         return vitalDao.getVitalByPatientAndDate(patientId, visitDate)
     }
 
-    private suspend fun sendToServer(vital: VitalEntity) {
+    // Get the latest vital for a patient
+    suspend fun getLatestVitalByPatient(patientId: String): VitalEntity? {
+        val vitals = vitalDao.getVitalsByPatient(patientId).firstOrNull()
+        if (vitals != null) {
+            return vitals.maxByOrNull { it.visitDate }
+        }
+        return TODO("Provide the return value")
+    }
+
+    private suspend fun sendToServer(vital: VitalEntity): Int? {
         try {
             val token = tokenManager.getAccessToken()
             if (token == null) {
                 println("No authentication token available. Vital saved locally only.")
-                return
+                return null
             }
 
             val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
@@ -56,19 +75,23 @@ class VitalRepository @Inject constructor(
             )
 
             if (response.isSuccessful) {
-                println("Vital successfully synced to server: ${response.body()?.data?.message}")
+                val serverId = response.body()?.data?.id
+                println("Vital successfully synced to server with ID: $serverId")
+                return serverId
             } else {
-                // Handle different HTTP error codes
                 when (response.code()) {
                     401 -> println("Unauthorized - Invalid token")
                     403 -> println("Forbidden - Insufficient permissions")
                     else -> println("Server error: ${response.code()} - ${response.errorBody()?.string()}")
                 }
+                return null
             }
         } catch (e: HttpException) {
             println("HTTP error: ${e.message}")
+            return null
         } catch (e: Exception) {
             println("Network error: ${e.message}. Vital saved locally, will sync when possible.")
+            return null
         }
     }
 }

@@ -12,7 +12,7 @@ import com.example.healthtrack.RoomDatabase.Entities.VitalEntity
 
 @Database(
     entities = [PatientRegistrationEntity::class, VitalEntity::class],
-    version = 3,
+    version = 4,
     exportSchema = false
 )
 @TypeConverters(Converters::class)

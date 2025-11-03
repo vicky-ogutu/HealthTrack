@@ -129,7 +129,7 @@ fun GeneralAssessmentScreen(
                     Button(
                         onClick = { viewModel.saveAssessment(patientId, vitalId) },
                         enabled = isFormValid && !isLoading
-                    ) {
+                    ){
                         if (isLoading) {
                             CircularProgressIndicator(
                                 modifier = Modifier.size(16.dp),

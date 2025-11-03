@@ -33,11 +33,20 @@ class PatientRegistrationViewModel(private val repository: PatientRegistrationRe
     val isPatientIdUnique: StateFlow<Boolean> = _isPatientIdUnique.asStateFlow()
 
     // Navigation state - FIXED: Use Boolean instead of String
-    private val _navigateToVitals = MutableStateFlow(false)
-    val navigateToVitals: StateFlow<Boolean> = _navigateToVitals.asStateFlow()
+   // private val _navigateToVitals = MutableStateFlow(false)
+    //val navigateToVitals: StateFlow<Boolean> = _navigateToVitals.asStateFlow()
 
     private val _lastSavedPatientId = MutableStateFlow<String?>(null)
     val lastSavedPatientId: StateFlow<String?> = _lastSavedPatientId.asStateFlow()
+
+//    private val _navigateToVitals = MutableStateFlow<String?>(null)
+//    val navigateToVitals: StateFlow<String?> = _navigateToVitals.asStateFlow()
+
+
+    private val _navigateToVitals = MutableStateFlow(false)
+    val navigateToVitals: StateFlow<Boolean> = _navigateToVitals.asStateFlow()
+
+
 
     // Form validation
     val isFormValid: StateFlow<Boolean> = combine(
@@ -106,6 +115,7 @@ class PatientRegistrationViewModel(private val repository: PatientRegistrationRe
         }
     }
 
+    // In the savePatient function, add debugging:
     fun savePatient() {
         viewModelScope.launch {
             try {
@@ -113,6 +123,8 @@ class PatientRegistrationViewModel(private val repository: PatientRegistrationRe
                 val dateOfBirthValue = dateOfBirth.value
 
                 if (registrationDateValue != null && dateOfBirthValue != null) {
+                    println("DEBUG - Saving patient with ID: ${patientId.value}")
+
                     val patient = PatientRegistrationEntity(
                         unique = patientId.value,
                         reg_date = registrationDateValue,
@@ -123,13 +135,17 @@ class PatientRegistrationViewModel(private val repository: PatientRegistrationRe
                     )
 
                     repository.insertPatient(patient)
-                    // Store the patient ID and trigger navigation
+
+                    //  Store patientId and trigger navigation
                     _lastSavedPatientId.value = patientId.value
                     _navigateToVitals.value = true
-                    clearForm()
+
+                    println("DEBUG - Navigation triggered with patientId: ${patientId.value}")
+                } else {
+                    println("DEBUG - Cannot save patient: missing dates")
                 }
             } catch (e: Exception) {
-                // Handle error
+                println("DEBUG - Error saving patient: ${e.message}")
                 e.printStackTrace()
             }
         }
@@ -160,4 +176,6 @@ class PatientRegistrationViewModel(private val repository: PatientRegistrationRe
             }
         }
     }
+
+
 }

@@ -34,6 +34,10 @@ class VitalViewModel(private val vitalRepository: VitalRepository) : ViewModel()
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
+    // Store the saved vital for navigation
+    private val _savedVital = MutableStateFlow<VitalEntity?>(null)
+    val savedVital: StateFlow<VitalEntity?> = _savedVital.asStateFlow()
+
     // Calculate BMI when height or weight changes
     fun updateHeight(height: String) {
         _height.value = height
@@ -93,7 +97,9 @@ class VitalViewModel(private val vitalRepository: VitalRepository) : ViewModel()
                     bmi = bmiValue
                 )
 
-                vitalRepository.insertVital(vital)
+                // Save vital and get the result (with server ID if available)
+                val savedVital = vitalRepository.insertVital(vital)
+                _savedVital.value = savedVital
                 _saveSuccess.value = true
 
             } catch (e: Exception) {
@@ -117,6 +123,7 @@ class VitalViewModel(private val vitalRepository: VitalRepository) : ViewModel()
 
     fun clearSuccess() {
         _saveSuccess.value = false
+        _savedVital.value = null
     }
 
     companion object {

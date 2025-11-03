@@ -7,6 +7,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
@@ -21,9 +22,6 @@ fun VitalsFormScreen(
     vitalViewModel: VitalViewModel,
     navController: NavController
 ) {
-
-    val currentPatientId = remember { "PAT-8C3D3876" }
-
     val visitDate by vitalViewModel.visitDate.collectAsState()
     val height by vitalViewModel.height.collectAsState()
     val weight by vitalViewModel.weight.collectAsState()
@@ -31,37 +29,58 @@ fun VitalsFormScreen(
     val saveSuccess by vitalViewModel.saveSuccess.collectAsState()
     val errorMessage by vitalViewModel.errorMessage.collectAsState()
     val isLoading by vitalViewModel.isLoading.collectAsState()
+    val savedVital by vitalViewModel.savedVital.collectAsState()
 
     val dateFormatter = remember { SimpleDateFormat("MMM dd, yyyy", Locale.getDefault()) }
     var showDatePicker by remember { mutableStateOf(false) }
 
     val visitDateState = rememberDatePickerState(initialSelectedDateMillis = visitDate?.time)
 
-    // Handle success - navigate based on BMI
-//    LaunchedEffect(saveSuccess) {
-//        if (saveSuccess) {
-//            vitalViewModel.clearSuccess()
-//            val currentBmi = bmi ?: 0.0
-//            // Navigate to appropriate assessment screen based on BMI
-//            // For now, just go back
-//            navController.popBackStack()
-//        }
-//    }
+    // Debug: Print form state to console
+    LaunchedEffect(visitDate, height, weight, bmi) {
+        println("DEBUG - Form State: visitDate=$visitDate, height=$height, weight=$weight, bmi=$bmi")
+    }
 
-    // In the LaunchedEffect for saveSuccess, replace with:
-    LaunchedEffect(saveSuccess) {
-        if (saveSuccess) {
+    // Calculate if form is valid
+    val isFormValid = remember(visitDate, height, weight, bmi) {
+        val hasVisitDate = visitDate != null
+        val hasHeight = height.isNotBlank() && height.toDoubleOrNull() != null && height.toDouble() > 0
+        val hasWeight = weight.isNotBlank() && weight.toDoubleOrNull() != null && weight.toDouble() > 0
+        val hasBmi = bmi != null
+
+        println("DEBUG - Validation: date=$hasVisitDate, height=$hasHeight, weight=$hasWeight, bmi=$hasBmi")
+
+        hasVisitDate && hasHeight && hasWeight && hasBmi
+    }
+
+    // Handle success - navigate based on BMI
+    LaunchedEffect(saveSuccess, savedVital) {
+        if (saveSuccess && savedVital != null) {
             vitalViewModel.clearSuccess()
             val currentBmi = bmi ?: 0.0
-            val vitalId = "1" // This should come from the actual saved vital record
 
-            if (currentBmi <= 25) {
-                navController.navigate("general_assessment/$patientId/$vitalId")
+            // Use the server ID if available, otherwise use local ID
+            val vitalId = savedVital?.serverId?.toString() ?: savedVital?.id ?: ""
+
+            println("DEBUG - Navigation: patientId=$patientId, BMI=$currentBmi, vitalId=$vitalId")
+
+            // Ensure patientId is not empty
+            if (patientId.isNotEmpty()) {
+                if (currentBmi <= 25) {
+                    // Navigate to General Assessment for BMI ≤ 25
+                    navController.navigate("general_assessment/$patientId/$vitalId")
+                } else {
+                    // Navigate to Overweight Assessment for BMI > 25
+                    navController.navigate("overweight_assessment/$patientId/$vitalId")
+                }
             } else {
-                navController.navigate("overweight_assessment/$patientId/$vitalId")
+                println("ERROR - Patient ID is empty, cannot navigate to assessment")
+                // Fallback: navigate back or show error
+                navController.popBackStack()
             }
         }
     }
+
     // Show error dialog
     if (errorMessage != null) {
         AlertDialog(
@@ -93,7 +112,9 @@ fun VitalsFormScreen(
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showDatePicker = false }) {
+                TextButton(
+                    onClick = { showDatePicker = false }
+                ) {
                     Text("Cancel")
                 }
             }
@@ -113,7 +134,7 @@ fun VitalsFormScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Patient Vitals - $currentPatientId") }
+                title = { Text("Patient Vitals") }
             )
         },
         bottomBar = {
@@ -133,13 +154,12 @@ fun VitalsFormScreen(
                         Text("Cancel")
                     }
 
-                    val isFormValid = visitDate != null &&
-                            height.isNotBlank() &&
-                            weight.isNotBlank() &&
-                            bmi != null
-
+                    // Debug info in button
                     Button(
-                        onClick = { vitalViewModel.saveVital(currentPatientId) },
+                        onClick = {
+                            println("DEBUG - Save button clicked")
+                            vitalViewModel.saveVital(patientId)
+                        },
                         enabled = isFormValid && !isLoading
                     ) {
                         if (isLoading) {
@@ -149,7 +169,16 @@ fun VitalsFormScreen(
                                 strokeWidth = 2.dp
                             )
                         } else {
-                            Text("Save Vitals")
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text("Save Vitals")
+                                if (!isFormValid) {
+                                    Text(
+                                        "Check form",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        modifier = Modifier.padding(top = 2.dp)
+                                    )
+                                }
+                            }
                         }
                     }
                 }
@@ -170,7 +199,7 @@ fun VitalsFormScreen(
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
             ) {
                 Text(
-                    text = "Patient ID: $currentPatientId",
+                    text = "Patient ID: $patientId",
                     modifier = Modifier.padding(16.dp),
                     style = MaterialTheme.typography.bodyMedium
                 )
@@ -187,7 +216,13 @@ fun VitalsFormScreen(
                         Icon(Icons.Default.DateRange, contentDescription = "Pick date")
                     }
                 },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                isError = visitDate == null,
+                supportingText = {
+                    if (visitDate == null) {
+                        Text("Visit date is required")
+                    }
+                }
             )
 
             // Height
@@ -197,7 +232,17 @@ fun VitalsFormScreen(
                 label = { Text("Height (CM) *") },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
-                placeholder = { Text("Enter height in centimeters") }
+                placeholder = { Text("Enter height in centimeters") },
+                isError = height.isNotBlank() && (height.toDoubleOrNull() == null || height.toDouble() <= 0),
+                supportingText = {
+                    if (height.isNotBlank()) {
+                        when {
+                            height.toDoubleOrNull() == null -> Text("Please enter a valid number")
+                            height.toDouble() <= 0 -> Text("Height must be greater than 0")
+                            else -> Text("Valid height")
+                        }
+                    }
+                }
             )
 
             // Weight
@@ -207,22 +252,72 @@ fun VitalsFormScreen(
                 label = { Text("Weight (KG) *") },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
-                placeholder = { Text("Enter weight in kilograms") }
+                placeholder = { Text("Enter weight in kilograms") },
+                isError = weight.isNotBlank() && (weight.toDoubleOrNull() == null || weight.toDouble() <= 0),
+                supportingText = {
+                    if (weight.isNotBlank()) {
+                        when {
+                            weight.toDoubleOrNull() == null -> Text("Please enter a valid number")
+                            weight.toDouble() <= 0 -> Text("Weight must be greater than 0")
+                            else -> Text("Valid weight")
+                        }
+                    }
+                }
             )
 
             // BMI (auto-calculated, read-only)
             OutlinedTextField(
                 value = bmi?.toString() ?: "",
                 onValueChange = { },
-                label = { Text("BMI (Auto-calculated)") },
+                label = { Text("BMI (Auto-calculated) *") },
                 modifier = Modifier.fillMaxWidth(),
                 readOnly = true,
                 singleLine = true,
-                placeholder = { Text("BMI will be calculated automatically") }
+                placeholder = { Text("BMI will be calculated automatically") },
+                isError = bmi == null,
+                supportingText = {
+                    if (bmi == null) {
+                        Text("Enter height and weight to calculate BMI")
+                    } else {
+                        Text("BMI calculated successfully")
+                    }
+                }
             )
 
-            // BMI Info
+            // Form Validation Status
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = if (isFormValid) MaterialTheme.colorScheme.primaryContainer
+                    else MaterialTheme.colorScheme.errorContainer
+                )
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(
+                        text = if (isFormValid) "Form is ready to save" else "Form validation issues",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    if (!isFormValid) {
+                        Column(modifier = Modifier.padding(top = 8.dp)) {
+                            if (visitDate == null) Text("• Visit date is required")
+                            if (height.isBlank() || height.toDoubleOrNull() == null || height.toDouble() <= 0) Text("• Valid height is required")
+                            if (weight.isBlank() || weight.toDoubleOrNull() == null || weight.toDouble() <= 0) Text("• Valid weight is required")
+                            if (bmi == null) Text("• BMI calculation required")
+                        }
+                    }
+                }
+            }
+
+            // BMI Info and Next Step Preview
             if (bmi != null) {
+                val bmiStatus = when {
+                    bmi!! < 18.5 -> "Underweight"
+                    bmi!! <= 25 -> "Normal"
+                    else -> "Overweight"
+                }
+
+                val nextStep = if (bmi!! <= 25) "General Assessment" else "Overweight Assessment"
+
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(
@@ -235,20 +330,19 @@ fun VitalsFormScreen(
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text(
-                            text = "BMI Status: ${
-                                when {
-                                    bmi!! < 18.5 -> "Underweight"
-                                    bmi!! <= 25 -> "Normal"
-                                    else -> "Overweight"
-                                }
-                            }",
+                            text = "BMI Status: $bmiStatus",
                             style = MaterialTheme.typography.bodyMedium
                         )
                         Text(
-                            text = "Next: ${
-                                if (bmi!! <= 25) "General Assessment" else "Overweight Assessment"
-                            }",
-                            style = MaterialTheme.typography.bodySmall
+                            text = "Next Step: $nextStep",
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.padding(top = 4.dp)
+                        )
+                        Text(
+                            text = "After saving, you will be directed to the $nextStep form",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(top = 8.dp)
                         )
                     }
                 }

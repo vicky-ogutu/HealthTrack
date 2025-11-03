@@ -34,13 +34,26 @@ fun PatientRegistrationScreen(
     val navigateToVitals by viewModel.navigateToVitals.collectAsState() // Now this is Boolean
     val lastSavedPatientId by viewModel.lastSavedPatientId.collectAsState()
 
+
+
+    // FIXED: Use the correct types
     LaunchedEffect(navigateToVitals) {
-        if (navigateToVitals) {
+        if (navigateToVitals) { // Check the Boolean flag
+            val patientIdToNavigate = lastSavedPatientId ?: patientId // Use lastSavedPatientId or current patientId
+
             viewModel.clearNavigation()
-            navController.navigate("vitals")
+            viewModel.clearForm()
+
+            println("DEBUG - Navigating to vitals with patientId: $patientIdToNavigate")
+
+            // Ensure patientId is not empty before navigating
+            if (patientIdToNavigate.isNotEmpty()) {
+                navController.navigate("vitals/$patientIdToNavigate")
+            } else {
+                println("ERROR - Patient ID is empty, cannot navigate to vitals")
+            }
         }
     }
-
     val dateFormatter = remember { SimpleDateFormat("MMM dd, yyyy", Locale.getDefault()) }
     val scrollState = rememberScrollState()
 

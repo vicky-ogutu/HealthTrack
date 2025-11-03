@@ -33,6 +33,9 @@ import com.example.healthtrack.Screens.OverweightAssessmentScreen
 import com.example.healthtrack.ViewModels.GeneralAssessmentViewModel
 import com.example.healthtrack.ViewModels.OverweightAssessmentViewModel
 
+import androidx.navigation.navArgument
+import com.example.healthtrack.Screens.PatientListingScreen
+
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -100,6 +103,7 @@ fun HealthTrackApp() {
         factory = OverweightAssessmentViewModel.Factory(visitRepository)
     )
 
+    // Update the NavHost in MainActivity:
     NavHost(
         navController = navController,
         startDestination = if (tokenManager.isLoggedIn()) "patient_registration" else "login"
@@ -121,6 +125,33 @@ fun HealthTrackApp() {
             )
         }
 
+        composable("patient_registration") {
+            PatientRegistrationScreen(
+                viewModel = patientViewModel,
+                navController = navController,
+                onClose = {
+                    authViewModel.logout()
+                    navController.navigate("login") {
+                        popUpTo("patient_registration") { inclusive = true }
+                    }
+                }
+            )
+        }
+
+        // FIXED: Add patientId parameter to vitals route
+        composable(
+            "vitals/{patientId}",
+            arguments = listOf(navArgument("patientId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val patientId = backStackEntry.arguments?.getString("patientId") ?: ""
+            VitalsFormScreen(
+                patientId = patientId,
+                vitalViewModel = vitalViewModel,
+                navController = navController
+            )
+        }
+
+        // FIXED: Add proper arguments for assessment routes
         composable(
             "general_assessment/{patientId}/{vitalId}",
             arguments = listOf(
@@ -154,12 +185,11 @@ fun HealthTrackApp() {
                 navController = navController
             )
         }
-
-//        composable("patient_listing") {
-//            PatientListingScreen(
-//                navController = navController
-//            )
-//        }
+        composable("patient_listing") {
+            PatientListingScreen(
+                //navController = navController
+            )
+        }
 
         composable("patient_registration") {
             PatientRegistrationScreen(

@@ -14,5 +14,6 @@ data class VitalEntity(
     val visitDate: Date,
     val height: Double, // in CM
     val weight: Double, // in KG
-    val bmi: Double
+    val bmi: Double,
+    val serverId: Int? = null // Store the server-generated ID
 )
