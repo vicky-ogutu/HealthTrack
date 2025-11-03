@@ -7,11 +7,11 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
 import java.util.*
 
 class OverweightAssessmentViewModel(private val visitRepository: VisitRepository) : ViewModel() {
 
-    // Form state
     private val _visitDate = MutableStateFlow<Date?>(null)
     val visitDate: StateFlow<Date?> = _visitDate.asStateFlow()
 
@@ -20,6 +20,9 @@ class OverweightAssessmentViewModel(private val visitRepository: VisitRepository
 
     private val _onDrugs = MutableStateFlow("")
     val onDrugs: StateFlow<String> = _onDrugs.asStateFlow()
+
+    private val _onDiet = MutableStateFlow("")
+    val onDiet: StateFlow<String> = _onDiet.asStateFlow()
 
     private val _comments = MutableStateFlow("")
     val comments: StateFlow<String> = _comments.asStateFlow()
@@ -45,6 +48,10 @@ class OverweightAssessmentViewModel(private val visitRepository: VisitRepository
         _onDrugs.value = onDrugs
     }
 
+    fun updateOnDiet(onDiet: String) {
+        _onDiet.value = onDiet
+    }
+
     fun updateComments(comments: String) {
         _comments.value = comments
     }
@@ -56,21 +63,27 @@ class OverweightAssessmentViewModel(private val visitRepository: VisitRepository
 
             try {
                 val visitDateValue = _visitDate.value
-                val generalHealthValue = _generalHealth.value
-                val onDrugsValue = _onDrugs.value
-                val commentsValue = _comments.value
+                val generalHealthValue = _generalHealth.value.trim()
+                val onDrugsValue = _onDrugs.value.trim()
+                val onDietValue = _onDiet.value.trim()
+                val commentsValue = _comments.value.trim()
 
-                if (visitDateValue == null || generalHealthValue.isBlank() || onDrugsValue.isBlank() || commentsValue.isBlank()) {
+                if (visitDateValue == null || generalHealthValue.isEmpty() || onDrugsValue.isEmpty() || commentsValue.isEmpty()) {
                     _errorMessage.value = "Please fill all fields"
                     return@launch
                 }
 
+                // ✅ Format visit date to string before sending
+                val dateFormatter = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+                val visitDateString = dateFormatter.format(visitDateValue)
+
                 val success = visitRepository.addOverweightAssessment(
                     patientId = patientId,
                     vitalId = vitalId,
-                    visitDate = visitDateValue,
+                    visitDate = visitDateString, // ✅ fixed (was Date before)
                     generalHealth = generalHealthValue,
                     onDrugs = onDrugsValue,
+                    onDiet = onDietValue,
                     comments = commentsValue
                 )
 
@@ -92,6 +105,7 @@ class OverweightAssessmentViewModel(private val visitRepository: VisitRepository
         _visitDate.value = null
         _generalHealth.value = ""
         _onDrugs.value = ""
+        _onDiet.value = ""
         _comments.value = ""
     }
 

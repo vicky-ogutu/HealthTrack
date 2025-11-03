@@ -1,6 +1,5 @@
 package com.example.healthtrack.ViewModels
 
-
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.healthtrack.Repositories.VisitRepository
@@ -12,7 +11,6 @@ import java.util.*
 
 class GeneralAssessmentViewModel(private val visitRepository: VisitRepository) : ViewModel() {
 
-    // Form state
     private val _visitDate = MutableStateFlow<Date?>(null)
     val visitDate: StateFlow<Date?> = _visitDate.asStateFlow()
 
@@ -21,6 +19,9 @@ class GeneralAssessmentViewModel(private val visitRepository: VisitRepository) :
 
     private val _onDiet = MutableStateFlow("")
     val onDiet: StateFlow<String> = _onDiet.asStateFlow()
+
+    private val _onDrugs = MutableStateFlow("")
+    val onDrugs: StateFlow<String> = _onDrugs.asStateFlow()
 
     private val _comments = MutableStateFlow("")
     val comments: StateFlow<String> = _comments.asStateFlow()
@@ -46,6 +47,10 @@ class GeneralAssessmentViewModel(private val visitRepository: VisitRepository) :
         _onDiet.value = onDiet
     }
 
+    fun updateOnDrugs(onDrugs: String) {
+        _onDrugs.value = onDrugs
+    }
+
     fun updateComments(comments: String) {
         _comments.value = comments
     }
@@ -57,21 +62,30 @@ class GeneralAssessmentViewModel(private val visitRepository: VisitRepository) :
 
             try {
                 val visitDateValue = _visitDate.value
-                val generalHealthValue = _generalHealth.value
-                val onDietValue = _onDiet.value
-                val commentsValue = _comments.value
+                val generalHealthValue = _generalHealth.value.trim()
+                val onDietValue = _onDiet.value.trim()
+                val onDrugsValue = _onDrugs.value.trim()
+                val commentsValue = _comments.value.trim()
 
-                if (visitDateValue == null || generalHealthValue.isBlank() || onDietValue.isBlank() || commentsValue.isBlank()) {
+                if (visitDateValue == null ||
+                    generalHealthValue.isEmpty() ||
+                    onDietValue.isEmpty() ||
+                    onDrugsValue.isEmpty() ||
+                    commentsValue.isEmpty()
+                ) {
                     _errorMessage.value = "Please fill all fields"
+                    _isLoading.value = false
                     return@launch
                 }
 
+                //  Pass Date directly — repository will format it
                 val success = visitRepository.addGeneralAssessment(
                     patientId = patientId,
                     vitalId = vitalId,
-                    visitDate = visitDateValue,
+                    visitDate = visitDateValue, // Date type expected
                     generalHealth = generalHealthValue,
                     onDiet = onDietValue,
+                    onDrugs = onDrugsValue,
                     comments = commentsValue
                 )
 
@@ -93,6 +107,7 @@ class GeneralAssessmentViewModel(private val visitRepository: VisitRepository) :
         _visitDate.value = null
         _generalHealth.value = ""
         _onDiet.value = ""
+        _onDrugs.value = ""
         _comments.value = ""
     }
 

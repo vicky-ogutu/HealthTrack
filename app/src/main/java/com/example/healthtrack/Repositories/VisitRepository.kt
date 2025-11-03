@@ -12,53 +12,59 @@ class VisitRepository @Inject constructor(
     private val visitApiService: VisitApiService,
     private val tokenManager: TokenManager
 ) {
+
+    private val dateFormatter = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+
     suspend fun addGeneralAssessment(
         patientId: String,
         vitalId: String,
         visitDate: Date,
         generalHealth: String,
         onDiet: String,
+        onDrugs: String,
         comments: String
     ): Boolean {
-        return sendToServer(
-            VisitRequest(
-                general_health = generalHealth,
-                on_diet = onDiet,
-                on_drugs = null, // Not used in general assessment
-                comments = comments,
-                visit_date = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(visitDate),
-                patient_id = patientId,
-                vital_id = vitalId
-            )
+        val formattedDate = dateFormatter.format(visitDate)
+        val request = VisitRequest(
+            general_health = generalHealth,
+            on_diet = onDiet,
+            on_drugs = onDrugs,
+            comments = comments,
+            visit_date = formattedDate,
+            patient_id = patientId,
+            vital_id = vitalId
         )
+        return sendToServer(request)
     }
 
     suspend fun addOverweightAssessment(
         patientId: String,
         vitalId: String,
-        visitDate: Date,
+        visitDate: String, // ✅ Now expects String, not Date
         generalHealth: String,
         onDrugs: String,
+        onDiet: String,
         comments: String
-    ): Boolean {
-        return sendToServer(
-            VisitRequest(
-                general_health = generalHealth,
-                on_diet = null, // Not used in overweight assessment
-                on_drugs = onDrugs,
-                comments = comments,
-                visit_date = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(visitDate),
-                patient_id = patientId,
-                vital_id = vitalId
-            )
+    ): Boolean
+    {
+        val formattedDate = dateFormatter.format(visitDate)
+        val request = VisitRequest(
+            general_health = generalHealth,
+            on_diet = onDiet,
+            on_drugs = onDrugs,
+            comments = comments,
+            visit_date = formattedDate,
+            patient_id = patientId,
+            vital_id = vitalId
         )
+        return sendToServer(request)
     }
 
     private suspend fun sendToServer(request: VisitRequest): Boolean {
-        try {
+        return try {
             val token = tokenManager.getAccessToken()
             if (token == null) {
-                println("No authentication token available. Visit saved locally only.")
+                println(" No authentication token available. Visit saved locally only.")
                 return false
             }
 
@@ -68,22 +74,19 @@ class VisitRepository @Inject constructor(
             )
 
             if (response.isSuccessful) {
-                println("Visit successfully synced to server: ${response.body()?.data?.message}")
-                return true
+                println(" Visit successfully synced to server: ${response.body()?.data?.message}")
+                true
             } else {
-                when (response.code()) {
-                    401 -> println("Unauthorized - Invalid token")
-                    403 -> println("Forbidden - Insufficient permissions")
-                    else -> println("Server error: ${response.code()} - ${response.errorBody()?.string()}")
-                }
-                return false
+                val errorBody = response.errorBody()?.string()
+                println(" Server error ${response.code()}: $errorBody")
+                false
             }
         } catch (e: HttpException) {
-            println("HTTP error: ${e.message}")
-            return false
+            println(" HTTP Exception: ${e.message}")
+            false
         } catch (e: Exception) {
-            println("Network error: ${e.message}. Visit will be retried later.")
-            return false
+            println(" Network/Unexpected Error: ${e.message}")
+            false
         }
     }
 }
