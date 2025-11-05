@@ -2,6 +2,7 @@ package com.example.healthtrack.Screens
 
 import android.os.Build
 import androidx.annotation.RequiresApi
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -26,7 +27,8 @@ import java.time.format.DateTimeFormatter
 @Composable
 fun PatientListScreen(
     viewModel: PatientListViewModel = viewModel(),
-    onAddPatientClick: () -> Unit
+    onAddPatientClick: () -> Unit,
+    onPatientClick: (String) -> Unit // <-- add this line
 ) {
     val patients by viewModel.patients.collectAsState()
     var selectedDate by remember { mutableStateOf("") }
@@ -116,38 +118,37 @@ fun PatientListScreen(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
+                            .clickable { onPatientClick(patient.id.toString()) } // ✅ now works
                             .padding(vertical = 8.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(
-                            text = "${patient.firstname} ${patient.lastname}",
-                            modifier = Modifier.weight(1f)
-                        )
-                        Text(
-                            text = "$age",
-                            modifier = Modifier.weight(0.5f),
-                            textAlign = TextAlign.Center
-                        )
-                        Text(
-                            text = bmi,
-                            modifier = Modifier.weight(0.5f),
-                            textAlign = TextAlign.Center
-                        )
+                        Text("${patient.firstname} ${patient.lastname}", Modifier.weight(1f))
+                        Text("$age", Modifier.weight(0.5f), textAlign = TextAlign.Center)
+                        Text(bmi, Modifier.weight(0.5f), textAlign = TextAlign.Center)
                     }
-
                     Divider()
                 }
             }
         }
     }
 
-    // Date Picker ---
+    // --- Date Picker ---
     if (showDatePicker) {
+        val datePickerState = rememberDatePickerState()
+
         DatePickerDialog(
             onDismissRequest = { showDatePicker = false },
             confirmButton = {
-                TextButton(onClick = { showDatePicker = false }) {
+                TextButton(onClick = {
+                    datePickerState.selectedDateMillis?.let {
+                        val localDate = Instant.ofEpochMilli(it)
+                            .atZone(ZoneId.systemDefault())
+                            .toLocalDate()
+                        selectedDate = dateFormatter.format(localDate)
+                    }
+                    showDatePicker = false
+                }) {
                     Text("OK")
                 }
             },
@@ -157,18 +158,7 @@ fun PatientListScreen(
                 }
             }
         ) {
-            val datePickerState = rememberDatePickerState()
-
             DatePicker(state = datePickerState)
-
-            LaunchedEffect(datePickerState.selectedDateMillis) {
-                datePickerState.selectedDateMillis?.let {
-                    val localDate = Instant.ofEpochMilli(it)
-                        .atZone(ZoneId.systemDefault())
-                        .toLocalDate()
-                    selectedDate = dateFormatter.format(localDate)
-                }
-            }
         }
     }
 }

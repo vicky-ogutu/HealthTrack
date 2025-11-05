@@ -17,33 +17,15 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.example.healthtrack.Repositories.AuthRepository
-import com.example.healthtrack.Repositories.PatientRegistrationRepository
-import com.example.healthtrack.Repositories.VisitRepository
-import com.example.healthtrack.Repositories.VitalRepository
+import com.example.healthtrack.Repositories.*
 import com.example.healthtrack.RoomDatabase.PatientDatabase
-import com.example.healthtrack.Screens.LoginScreen
-import com.example.healthtrack.Screens.PatientRegistrationScreen
-import com.example.healthtrack.Screens.SignUpScreen
-import com.example.healthtrack.Screens.VitalsFormScreen
-import com.example.healthtrack.ViewModels.AuthViewModel
-import com.example.healthtrack.ViewModels.PatientRegistrationViewModel
-import com.example.healthtrack.ViewModels.VitalViewModel
-
-import com.example.healthtrack.Screens.GeneralAssessmentScreen
-import com.example.healthtrack.Screens.OverweightAssessmentScreen
-import com.example.healthtrack.ViewModels.GeneralAssessmentViewModel
-import com.example.healthtrack.ViewModels.OverweightAssessmentViewModel
-
-import androidx.navigation.navArgument
-import com.example.healthtrack.Screens.PatientListScreen
-import com.example.healthtrack.ViewModels.PatientListViewModel
+import com.example.healthtrack.Screens.*
+import com.example.healthtrack.ViewModels.*
 
 class MainActivity : ComponentActivity() {
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
         setContent {
             MaterialTheme {
                 Surface(
@@ -63,10 +45,8 @@ fun HealthTrackApp() {
     val navController = rememberNavController()
     val context = LocalContext.current
 
-    // Initialize dependencies
     val tokenManager = TokenManager(context)
 
-    // Create repositories
     val authRepository = AuthRepository(RetrofitInstance.authApiService)
     val patientDatabase = PatientDatabase.getInstance(context)
 
@@ -82,7 +62,11 @@ fun HealthTrackApp() {
         tokenManager = tokenManager
     )
 
-    // Create ViewModels
+    val visitRepository = VisitRepository(
+        visitApiService = RetrofitInstance.visitApiService,
+        tokenManager = tokenManager
+    )
+
     val authViewModel: AuthViewModel = viewModel(
         factory = AuthViewModel.Factory(authRepository, tokenManager)
     )
@@ -95,11 +79,6 @@ fun HealthTrackApp() {
         factory = VitalViewModel.Factory(vitalRepository)
     )
 
-    val visitRepository = VisitRepository(
-        visitApiService = RetrofitInstance.visitApiService,
-        tokenManager = tokenManager
-    )
-
     val generalAssessmentViewModel: GeneralAssessmentViewModel = viewModel(
         factory = GeneralAssessmentViewModel.Factory(visitRepository)
     )
@@ -108,24 +87,20 @@ fun HealthTrackApp() {
         factory = OverweightAssessmentViewModel.Factory(visitRepository)
     )
 
-    // Update the NavHost:
     NavHost(
         navController = navController,
-        //startDestination = if (tokenManager.isLoggedIn()) "patient_registration" else "login"
         startDestination = if (tokenManager.isLoggedIn()) "patient_listing" else "login"
-
     ) {
         composable("login") {
             LoginScreen(
                 authViewModel = authViewModel,
-                navController = navController,
-                onNavigateToSignUp = { navController.navigate("signup") },
                 onLoginSuccess = {
                     navController.navigate("patient_listing") {
                         popUpTo("login") { inclusive = true }
                     }
-                }
-
+                },
+                onNavigateToSignUp = { navController.navigate("signup") },
+                navController = TODO()
             )
         }
 
@@ -137,8 +112,32 @@ fun HealthTrackApp() {
             )
         }
 
+        composable("patient_listing") {
+            val patientListViewModel: PatientListViewModel = viewModel(
+                factory = PatientListViewModel.Factory(tokenManager)
+            )
+            PatientListScreen(
+                viewModel = patientListViewModel,
+                onAddPatientClick = { navController.navigate("patient_registration") },
+                onPatientClick = { patientId ->
+                    navController.navigate("vitals/$patientId")
+                }
+            )
+        }
 
-        // FIXED: Add patientId parameter to vitals route
+        composable("patient_registration") {
+            PatientRegistrationScreen(
+                viewModel = patientViewModel,
+                navController = navController,
+                onClose = {
+                    authViewModel.logout()
+                    navController.navigate("login") {
+                        popUpTo("patient_listing") { inclusive = true }
+                    }
+                }
+            )
+        }
+
         composable(
             "vitals/{patientId}",
             arguments = listOf(navArgument("patientId") { type = NavType.StringType })
@@ -157,12 +156,10 @@ fun HealthTrackApp() {
                 navArgument("patientId") { type = NavType.StringType },
                 navArgument("vitalId") { type = NavType.StringType }
             )
-        ) { backStackEntry ->
-            val patientId = backStackEntry.arguments?.getString("patientId") ?: ""
-            val vitalId = backStackEntry.arguments?.getString("vitalId") ?: ""
+        ) { entry ->
             GeneralAssessmentScreen(
-                patientId = patientId,
-                vitalId = vitalId,
+                patientId = entry.arguments?.getString("patientId") ?: "",
+                vitalId = entry.arguments?.getString("vitalId") ?: "",
                 viewModel = generalAssessmentViewModel,
                 navController = navController
             )
@@ -174,49 +171,11 @@ fun HealthTrackApp() {
                 navArgument("patientId") { type = NavType.StringType },
                 navArgument("vitalId") { type = NavType.StringType }
             )
-        ) { backStackEntry ->
-            val patientId = backStackEntry.arguments?.getString("patientId") ?: ""
-            val vitalId = backStackEntry.arguments?.getString("vitalId") ?: ""
+        ) { entry ->
             OverweightAssessmentScreen(
-                patientId = patientId,
-                vitalId = vitalId,
+                patientId = entry.arguments?.getString("patientId") ?: "",
+                vitalId = entry.arguments?.getString("vitalId") ?: "",
                 viewModel = overweightAssessmentViewModel,
-                navController = navController
-            )
-        }
-
-
-        composable("patient_listing") {
-            val patientListViewModel: PatientListViewModel = viewModel(
-                factory = PatientListViewModel.Factory(tokenManager)
-            )
-
-            PatientListScreen(
-                viewModel = patientListViewModel,
-                onAddPatientClick = { navController.navigate("patient_registration") }
-            )
-        }
-
-
-        composable("patient_registration") {
-            PatientRegistrationScreen(
-                viewModel = patientViewModel,
-                navController = navController,
-                onClose = {
-                    authViewModel.logout()
-                    navController.navigate("login") {
-                        popUpTo("patient_listing") { inclusive = true }
-                    }
-                }
-            )
-        }
-
-
-        // FIXED: Use simpler route pattern without arguments first
-        composable("vitals") {
-            VitalsFormScreen(
-                patientId = "", // We'll pass this through ViewModel state
-                vitalViewModel = vitalViewModel,
                 navController = navController
             )
         }
