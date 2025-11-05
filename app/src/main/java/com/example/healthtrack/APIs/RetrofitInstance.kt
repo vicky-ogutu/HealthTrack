@@ -2,6 +2,7 @@
 package com.example.healthtrack
 
 import com.example.healthtrack.APIs.AuthApiService
+import com.example.healthtrack.APIs.PatientListApiService
 import com.example.healthtrack.APIs.PatientRegistrationApiService
 import com.example.healthtrack.APIs.VisitApiService
 import com.example.healthtrack.APIs.VitalApiService
@@ -45,5 +46,9 @@ object RetrofitInstance {
 
     val visitApiService: VisitApiService by lazy {
         retrofit.create(VisitApiService::class.java)
+    }
+
+    val patientListApiService: PatientListApiService by lazy {
+        retrofit.create(PatientListApiService::class.java)
     }
 }

@@ -1,8 +1,10 @@
 package com.example.healthtrack
 
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -34,9 +36,11 @@ import com.example.healthtrack.ViewModels.GeneralAssessmentViewModel
 import com.example.healthtrack.ViewModels.OverweightAssessmentViewModel
 
 import androidx.navigation.navArgument
-import com.example.healthtrack.Screens.PatientListingScreen
+import com.example.healthtrack.Screens.PatientListScreen
+import com.example.healthtrack.ViewModels.PatientListViewModel
 
 class MainActivity : ComponentActivity() {
+    @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -53,6 +57,7 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun HealthTrackApp() {
     val navController = rememberNavController()
@@ -103,17 +108,24 @@ fun HealthTrackApp() {
         factory = OverweightAssessmentViewModel.Factory(visitRepository)
     )
 
-    // Update the NavHost in MainActivity:
+    // Update the NavHost:
     NavHost(
         navController = navController,
-        startDestination = if (tokenManager.isLoggedIn()) "patient_registration" else "login"
+        //startDestination = if (tokenManager.isLoggedIn()) "patient_registration" else "login"
+        startDestination = if (tokenManager.isLoggedIn()) "patient_listing" else "login"
+
     ) {
         composable("login") {
             LoginScreen(
                 authViewModel = authViewModel,
                 navController = navController,
                 onNavigateToSignUp = { navController.navigate("signup") },
-                onLoginSuccess = { navController.navigate("patient_registration") }
+                onLoginSuccess = {
+                    navController.navigate("patient_listing") {
+                        popUpTo("login") { inclusive = true }
+                    }
+                }
+
             )
         }
 
@@ -125,18 +137,6 @@ fun HealthTrackApp() {
             )
         }
 
-        composable("patient_registration") {
-            PatientRegistrationScreen(
-                viewModel = patientViewModel,
-                navController = navController,
-                onClose = {
-                    authViewModel.logout()
-                    navController.navigate("login") {
-                        popUpTo("patient_registration") { inclusive = true }
-                    }
-                }
-            )
-        }
 
         // FIXED: Add patientId parameter to vitals route
         composable(
@@ -151,7 +151,6 @@ fun HealthTrackApp() {
             )
         }
 
-        // FIXED: Add proper arguments for assessment routes
         composable(
             "general_assessment/{patientId}/{vitalId}",
             arguments = listOf(
@@ -185,11 +184,19 @@ fun HealthTrackApp() {
                 navController = navController
             )
         }
+
+
         composable("patient_listing") {
-            PatientListingScreen(
-                //navController = navController
+            val patientListViewModel: PatientListViewModel = viewModel(
+                factory = PatientListViewModel.Factory(tokenManager)
+            )
+
+            PatientListScreen(
+                viewModel = patientListViewModel,
+                onAddPatientClick = { navController.navigate("patient_registration") }
             )
         }
+
 
         composable("patient_registration") {
             PatientRegistrationScreen(
@@ -198,11 +205,12 @@ fun HealthTrackApp() {
                 onClose = {
                     authViewModel.logout()
                     navController.navigate("login") {
-                        popUpTo("patient_registration") { inclusive = true }
+                        popUpTo("patient_listing") { inclusive = true }
                     }
                 }
             )
         }
+
 
         // FIXED: Use simpler route pattern without arguments first
         composable("vitals") {
